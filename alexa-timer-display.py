@@ -7,11 +7,16 @@
 import logging
 import sys
 import os
+import signal
 import threading
 import time
+import math
 
 import dateutil.parser
 from agt import AlexaGadget
+
+from display_max7219 import DisplayMax7219
+
 
 FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.NOTSET, format=FORMAT)
@@ -32,6 +37,9 @@ class TimerGadget(AlexaGadget):
         self.timer_thread = None
         self.timer_token = None
         self.timer_end_time = None
+        self.event = threading.Event()
+        self.display = DisplayMax7219()
+
 
     def on_alerts_setalert(self, directive):
         """
@@ -69,6 +77,7 @@ class TimerGadget(AlexaGadget):
 
         # run timer in it's own thread to prevent blocking future directives during count down
         self.timer_thread = threading.Thread(target=self._run_timer)
+        self.timer_thread.setDaemon(True) 
         self.timer_thread.start()
 
     def on_alerts_deletealert(self, directive):
@@ -83,6 +92,7 @@ class TimerGadget(AlexaGadget):
         # delete the timer, and stop the currently running timer thread
         logger.info("Received DeleteAlert directive. Cancelling the timer")
         self.timer_token = None
+        self.display.off()
 
 
     def _run_timer(self):
@@ -91,30 +101,87 @@ class TimerGadget(AlexaGadget):
         """
         # check every 500ms
         start_time = time.time()
+        logger.info("current time: %f", start_time)
+
         time_remaining = self.timer_end_time - start_time
         while self.timer_token and time_remaining > 0:
-            logger.info("Timer token %s.  %d seconds left..", self.timer_token, time_remaining)
-            time_total = self.timer_end_time - start_time
-            time_remaining = max(0, self.timer_end_time - time.time())
+            #time_total = self.timer_end_time - start_time
+            currentTime = time.time()
+            time_remaining = max(0, self.timer_end_time - currentTime)
+            halfSecond = (time.time() % 1) >= 0.5
+            logger.info("Timer token %s.  %d seconds left.  halfSecond: %d", 
+                self.timer_token, time_remaining, halfSecond)
 
             # Format the timer digits for display
             timer = time.strftime("%H:%M:%S", time.gmtime(time_remaining))
 
             # Display timer here
             logger.info("Display timer value: %s", timer)
+            self.display.display_time_remaining(time_remaining)
 
-            time.sleep(0.5)
+            # We grab the time again to caculate sleep
+            subseconds = time.time() % 1
+            if subseconds >= 0.5:
+                sleepTime = 1.0 - subseconds
+            else:
+                sleepTime = 0.5 - subseconds
+            #logger.info("sleepTime: %f", sleepTime)
+            self.event.wait(sleepTime)
 
+
+    def test(self):
+        """
+        Test timer thread
+        """
+
+        self.register_signal_handler()
+
+        scheduledTime = '2020-02-11T02:00:00-07:00'
+        t = dateutil.parser.parse(scheduledTime).timestamp()
+        self.timer_end_time = t
+        self.timer_token = '2551392553'
+        self.timer_thread = threading.Thread(target=self._run_timer)
+        self.timer_thread.setDaemon(True) 
+        self.timer_thread.start()
+        logger.info("thread _run_timer started")
+        self.timer_thread.join()
+        logger.info("thread _run_timer ended")
+
+    def register_signal_handler(self):
+
+        self.original_handler_SIGINT = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, self.signal_handler)
  
+        self.original_handler_SIGTERM = signal.getsignal(signal.SIGTERM)
+        signal.signal(signal.SIGTERM, self.signal_handler) 
+
+    def signal_handler(self, signum, frame):
+            logger.info('Shutdown...')
+
+            self.timer_token = None
+            self.event.set()
+
+            # Do cleanup here
+
+
+            # Call original handlers
+            if signum==signal.SIGINT:
+                self.original_handler_SIGINT(signum, frame)
+            elif signum==signal.SIGTERM:
+                self.original_handler_SIGTERM(signum, frame)
+
+            sys.tracebacklimit = 0
+            sys.exit(0)
+
+
 
 if __name__ == '__main__':
 
     if os.geteuid() != 0:
         exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
 
-    try:
-        TimerGadget().main()
-    finally:
-        if KeyboardInterrupt:
-            logger.debug('Cleaning up code here')
+    #TimerGadget().test()
+    TimerGadget().main()
+        
+
 
