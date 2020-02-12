@@ -22,7 +22,9 @@ class DisplayMax7219():
         serial = spi(port=0, device=0, gpio=noop())
         self.device = max7219(serial, cascaded=4, block_orientation=90,
                         rotate=0, blocks_arranged_in_reverse_order=False)
-        self.device.contrast(16)        
+        self.device.contrast(16)
+        LCD_FONT[0x3a] = [0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        LCD_FONT[0x7e] = [0x00, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         print("Created device")
 
 
@@ -42,19 +44,25 @@ class DisplayMax7219():
         if halfSecond or (minutes == "00" and seconds == "00"):
             sperator = ":" 
         else:
-            sperator = " "
+            sperator = "~"
 
         if minutes == "00":
             minutes = "  "
+
+        if minutes.startswith('0'):
+            minutes = minutes.replace('0', ' ', 1)
 
         seconds = seconds.replace("0", "O")
         minutes = minutes.replace("0", "O")
 
 
+        outText = minutes + sperator + seconds
         with canvas(self.device) as draw:
-            text(draw, (3, 1), minutes, fill="white", font=proportional(LCD_FONT))
-            text(draw, (15, 1), sperator, fill="white", font=proportional(TINY_FONT))
-            text(draw, (17, 1), seconds, fill="white", font=proportional(LCD_FONT))
+            text(draw, (4, 1), outText, fill="white", font=proportional(LCD_FONT))
+            #text(draw, (3, 1), minutes, fill="white", font=proportional(LCD_FONT))
+            #text(draw, (15, 1), sperator, fill="white", font=proportional(TINY_FONT))
+            #text(draw, (15, 1), c, fill="white", font=proportional(LCD_FONT))
+            #text(draw, (17, 1), seconds, fill="white", font=proportional(LCD_FONT))
         
     def off(self):
         self.device.clear()
@@ -62,7 +70,7 @@ class DisplayMax7219():
 
     def test(self):
 
-        i = 62.0
+        i = 1690.0
         while i >= 0:
             self.display_time_remaining(i)
             time.sleep(0.5)
