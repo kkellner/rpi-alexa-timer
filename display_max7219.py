@@ -23,8 +23,12 @@ class DisplayMax7219():
         self.device = max7219(serial, cascaded=4, block_orientation=90,
                         rotate=0, blocks_arranged_in_reverse_order=False)
         self.device.contrast(16)
+        # Smaller colon ":"
         LCD_FONT[0x3a] = [0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        # Override tilda "~" to use as smaller colon ":" with dots further apart
         LCD_FONT[0x7e] = [0x00, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        # Override tilda "~" to use as two pixel wide space
+        #LCD_FONT[0x7e] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         print("Created device")
 
 
@@ -52,17 +56,14 @@ class DisplayMax7219():
         if minutes.startswith('0'):
             minutes = minutes.replace('0', ' ', 1)
 
+        # TODO: Update font to remove slash through zero
         seconds = seconds.replace("0", "O")
         minutes = minutes.replace("0", "O")
 
-
         outText = minutes + sperator + seconds
         with canvas(self.device) as draw:
-            text(draw, (4, 1), outText, fill="white", font=proportional(LCD_FONT))
-            #text(draw, (3, 1), minutes, fill="white", font=proportional(LCD_FONT))
-            #text(draw, (15, 1), sperator, fill="white", font=proportional(TINY_FONT))
-            #text(draw, (15, 1), c, fill="white", font=proportional(LCD_FONT))
-            #text(draw, (17, 1), seconds, fill="white", font=proportional(LCD_FONT))
+            text(draw, (4, 1), outText, fill="white", font=alt_proportional(LCD_FONT))
+
         
     def off(self):
         self.device.clear()
@@ -98,6 +99,35 @@ class DisplayMax7219():
         #     #text(draw, (15, 1), ":", fill="white", font=proportional(CP437_FONT))
         #     text(draw, (17, 1), minutes, fill="white", font=proportional(CP437_FONT))
         # time.sleep(10)
+
+
+class alt_proportional(object):
+    """
+    Wraps an existing font array, and on on indexing, trims any leading
+    or trailing zero column definitions. This works especially well
+    with scrolling messages, as interspace columns are squeezed to a
+    single pixel.
+    """
+    def __init__(self, font):
+        self.font = font
+
+    def __getitem__(self, ascii_code):
+        bitmap = self.font[ascii_code]
+        # Return a slim version of the space character
+        if ascii_code == 32:
+            return [0] * 4
+        #elif ascii_code == 0x7e:
+        #    return [0] * 2
+        else:
+            return self._trim(bitmap) + [0]
+
+    def _trim(self, arr):
+        nonzero = [idx for idx, val in enumerate(arr) if val != 0]
+        if not nonzero:
+            return []
+        first = nonzero[0]
+        last = nonzero[-1] + 1
+        return arr[first:last]
 
 
 
