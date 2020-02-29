@@ -8,8 +8,10 @@
 # 2.  Clone repo git clone https://github.com/alexa/Alexa-Gadgets-Raspberry-Pi-Samples.git
 # 3.  Run:
 #       cd /home/pi/Alexa-Gadgets-Raspberry-Pi-Samples/
+#       sudo apt-get install -y python3-pip
 #       sudo python3 launch.py --setup
-#       sudo python3 launch.py --pair
+#       sudo python3 launch.py --example kitchen_sink (to pair which alexa)
+#
 import logging
 import sys
 import os
@@ -184,8 +186,8 @@ class TimerGadget(AlexaGadget):
 
 if __name__ == '__main__':
 
-    if os.geteuid() != 0:
-        exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
+    #if os.geteuid() != 0:
+    #    exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
 
     #TimerGadget().test()
     TimerGadget().main()

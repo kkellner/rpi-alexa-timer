@@ -2,8 +2,11 @@
 # 
 # Display time using Adafruit HAT/Bonnet and LED 32x64 Matrix display
 #
-# Python libs needed:
-#   
+# Setup needed:
+#
+#  curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/rgb-matrix.sh > rgb-matrix.sh
+#  sudo bash rgb-matrix.sh
+#
 import time
 import logging
 import sys
@@ -33,6 +36,8 @@ class DisplayAdafruitHat():
         options.pixel_mapper_config = ""
         options.show_refresh_rate = 0
         options.gpio_slowdown = 1
+        options.daemon = 0
+        options.drop_privileges = False
         #  options.disable_hardware_pulsing = True
 
         self.matrix = RGBMatrix(options = options)
@@ -74,6 +79,7 @@ class DisplayAdafruitHat():
 
     def off(self):
         self.offscreen_canvas.Clear()
+        graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, "")
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
     def test(self):

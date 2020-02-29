@@ -3,6 +3,7 @@
 # Display time using MAX7219 LED display
 #
 # Python libs needed:
+#   sudo apt-get install -y python3-pip
 #   sudo pip3 install RPI.GPIO
 #   sudo pip3 install adafruit-blinka
 #   sudo pip3 install adafruit-circuitpython-max7219
