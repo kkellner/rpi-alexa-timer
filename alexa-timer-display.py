@@ -3,7 +3,13 @@
 # Alexa Timer Display
 # Uses Alexa Gadget API
 #
-
+# Setup and pair bluetooth using instructions here: https://github.com/alexa/Alexa-Gadgets-Raspberry-Pi-Samples
+# 1.  Create Amazon ID and Alexa Gadget Secret via Alexa Voice Service Developer Console.
+# 2.  Clone repo git clone https://github.com/alexa/Alexa-Gadgets-Raspberry-Pi-Samples.git
+# 3.  Run:
+#       cd /home/pi/Alexa-Gadgets-Raspberry-Pi-Samples/
+#       sudo python3 launch.py --setup
+#       sudo python3 launch.py --pair
 import logging
 import sys
 import os
@@ -15,7 +21,8 @@ import math
 import dateutil.parser
 from agt import AlexaGadget
 
-from display_max7219 import DisplayMax7219
+#from display_max7219 import DisplayMax7219 as Display
+from display_adafruit_hat import DisplayAdafruitHat as Display
 
 
 FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
@@ -38,7 +45,7 @@ class TimerGadget(AlexaGadget):
         self.timer_token = None
         self.timer_end_time = None
         self.event = threading.Event()
-        self.display = DisplayMax7219()
+        self.display = Display()
 
 
     def on_alerts_setalert(self, directive):

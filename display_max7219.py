@@ -1,4 +1,14 @@
-
+#!/usr/bin/env python
+# 
+# Display time using MAX7219 LED display
+#
+# Python libs needed:
+#   sudo pip3 install RPI.GPIO
+#   sudo pip3 install adafruit-blinka
+#   sudo pip3 install adafruit-circuitpython-max7219
+#   sudo pip3 install adafruit-circuitpython-framebuf
+#   sudo pip3 install dbus-python
+#
 import time
 import logging
 
@@ -12,7 +22,7 @@ from luma.core.legacy import text, show_message
 from luma.core.legacy.font import proportional, CP437_FONT, TINY_FONT, SINCLAIR_FONT, LCD_FONT
 
 
-logger = logging.getLogger('light')
+logger = logging.getLogger('display')
 
 # Alexa Gadget code
 class DisplayMax7219():
