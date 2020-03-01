@@ -18,7 +18,8 @@ from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 logger = logging.getLogger(__name__)
 
 class DisplayAdafruitHat():
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
+        print("__init__")
 
         options = RGBMatrixOptions()
         options.hardware_mapping = "adafruit-hat-pwm"
@@ -31,16 +32,18 @@ class DisplayAdafruitHat():
         options.multiplexing = 0
         options.pwm_bits = 11
         options.brightness = 100
-        options.pwm_lsb_nanoseconds = 130
+        options.disable_hardware_pulsing = 0
+        #options.pwm_lsb_nanoseconds = 130
+        options.pwm_lsb_nanoseconds = 500  # 400=Good
         options.led_rgb_sequence = "RGB"
         options.pixel_mapper_config = ""
         options.show_refresh_rate = 0
-        options.gpio_slowdown = 1
+        options.gpio_slowdown = 0
         options.daemon = 0
         options.drop_privileges = False
-        #  options.disable_hardware_pulsing = True
-
+ 
         self.matrix = RGBMatrix(options = options)
+
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
         self.font = graphics.Font()
 
@@ -53,8 +56,9 @@ class DisplayAdafruitHat():
         #self.font.LoadFont("ibm-vio-10x21-r-iso10646-1-21.bdf")
         #self.font.LoadFont("ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
-        self.matrix.brightness = 75 
+        self.matrix.brightness = 15 
         self.textColor = graphics.Color(255, 0, 0)
+        logger.info("display adafruit hat init complete")
 
 
     def display_time_remaining(self, time_remaining):
@@ -76,18 +80,24 @@ class DisplayAdafruitHat():
         #print("time:"+outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
-
     def off(self):
         self.offscreen_canvas.Clear()
         graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, "")
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+
+    def hello(self):
+        outText = "Hello"
+        self.offscreen_canvas.Clear()
+        len = graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, outText)
+        self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+
 
     def test(self):
 
         self.textColor = graphics.Color(255, 0, 0)
         #self.textColor = graphics.Color(255, 255, 255)
         #pos = offscreen_canvas.width
-        self.matrix.brightness = 75 
+        self.matrix.brightness = 15 
 
         i = 1800.0
         while i >= 0:

@@ -42,13 +42,21 @@ class TimerGadget(AlexaGadget):
     """
 
     def __init__(self):
-        super().__init__()
         self.timer_thread = None
         self.timer_token = None
         self.timer_end_time = None
         self.event = threading.Event()
+        logger.info("init display")
         self.display = Display()
+        self.display.hello()
+        super().__init__()        
 
+
+    def on_connected(self, device_addr):
+        logger.info("on_connected called")
+
+    def on_disconnected(self, device_addr):
+        logger.info("on_disconnect called")
 
     def on_alerts_setalert(self, directive):
         """
@@ -186,11 +194,11 @@ class TimerGadget(AlexaGadget):
 
 if __name__ == '__main__':
 
-    #if os.geteuid() != 0:
-    #    exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
-
-    #TimerGadget().test()
-    TimerGadget().main()
+    if os.geteuid() != 0:
+        exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
+    gadget = TimerGadget()
+    logger.info("gadget about to call main")
+    gadget.main()
         
 
 
