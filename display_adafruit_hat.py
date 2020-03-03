@@ -46,13 +46,15 @@ class DisplayAdafruitHat():
 
         self.offscreen_canvas = self.matrix.CreateFrameCanvas()
         self.font = graphics.Font()
+        self.fontSmall = graphics.Font()
 
         # Setup Fonts
         # Get fonts from here: https://github.com/dk/ibm-vio-os2-fonts
-        #self.font.LoadFont("../../../fonts/7x13.bdf")
         #self.font.LoadFont("../../../fonts/10x20.bdf")
         #self.font.LoadFont("ibm-vio-12x20-r-iso10646-1-20.bdf")
-        self.font.LoadFont("ibm-vio-12x30-r-iso10646-1-30.bdf")
+
+        self.fontSmall.LoadFont("ibm-vio-6x10-r-iso10646-1-10.bdf")
+        self.font.LoadFont("ibm-vio-12x30-r-iso10646-1-30-modified.bdf")
         #self.font.LoadFont("ibm-vio-10x21-r-iso10646-1-21.bdf")
         #self.font.LoadFont("ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
@@ -70,7 +72,18 @@ class DisplayAdafruitHat():
         # Format the timer digits for display
         minutes = time.strftime("%M", time.gmtime(time_remaining))
         seconds = time.strftime("%S", time.gmtime(time_remaining))
-        sperator = ":" 
+
+        if halfSecond or (minutes == "00" and seconds == "00"):
+            sperator = ":" 
+        else:
+            sperator = "~"
+
+        if minutes == "00":
+            minutes = "  "
+
+        if minutes.startswith('0'):
+            minutes = minutes.replace('0', ' ', 1)
+
         outText = minutes + sperator + seconds
 
         self.offscreen_canvas.Clear()
@@ -80,17 +93,13 @@ class DisplayAdafruitHat():
         #print("time:"+outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
-    def off(self):
-        self.offscreen_canvas.Clear()
-        graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, "")
-        self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+    def clear(self):
+        self.show_text("")
 
-    def hello(self):
-        outText = "Hello"
+    def show_text(self, outText):
         self.offscreen_canvas.Clear()
-        len = graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, outText)
+        len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, 15, self.textColor, outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
-
 
     def test(self):
 
@@ -112,4 +121,7 @@ if __name__ == "__main__":
     #logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=FORMAT)
 
     display = DisplayAdafruitHat()
+    #display.show_text("00:00")
     display.test()
+    #display.display_time_remaining(60)
+    #time.sleep(60)

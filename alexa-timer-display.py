@@ -32,7 +32,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.NOTSET, format=FORMAT)
 #logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
 
-# Alexa Gadget code
+# Alexa Gadget code.  
+# Parent class: https://github.com/alexa/Alexa-Gadgets-Raspberry-Pi-Samples/blob/master/src/agt/alexa_gadget.py
 class TimerGadget(AlexaGadget):
     """
     An Alexa Gadget that reacts to a single timer set on an Echo device.
@@ -48,15 +49,18 @@ class TimerGadget(AlexaGadget):
         self.event = threading.Event()
         logger.info("init display")
         self.display = Display()
-        self.display.hello()
+        self.display.show_text("Startup")
         super().__init__()        
 
 
     def on_connected(self, device_addr):
         logger.info("on_connected called")
+        #self.display.show_text("Connected")
+        self.display.clear()
 
     def on_disconnected(self, device_addr):
         logger.info("on_disconnect called")
+        self.display.show_text("Disconnected")
 
     def on_alerts_setalert(self, directive):
         """
@@ -109,7 +113,7 @@ class TimerGadget(AlexaGadget):
         # delete the timer, and stop the currently running timer thread
         logger.info("Received DeleteAlert directive. Cancelling the timer")
         self.timer_token = None
-        self.display.off()
+        self.display.clear()
 
 
     def _run_timer(self):
