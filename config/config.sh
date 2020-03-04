@@ -54,6 +54,11 @@ configFile=/boot/config.txt
 sudo apt-get update -y
 sudo apt-get upgrade -y
 
+# Setup NTP (time sync)
+sudo apt-get install -y ntp
+sudo systemctl enable ntp
+sudo timedatectl set-ntp 1
+
 sudo apt-get install -y python3-pip
 
 # Configuring I2C
