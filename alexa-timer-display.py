@@ -19,6 +19,7 @@ import signal
 import threading
 import time
 import math
+import netifaces 
 
 import dateutil.parser
 from agt import AlexaGadget
@@ -49,7 +50,12 @@ class TimerGadget(AlexaGadget):
         self.event = threading.Event()
         logger.info("init display")
         self.display = Display()
+
+        #netifaces.ifaddresses('wlan0')
+        ip = netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
+
         self.display.show_text("Startup")
+        self.display.show_text(ip, 2)
         super().__init__()        
 
 

@@ -1,0 +1,26 @@
+#
+# sudo cp alexa.service /etc/systemd/system
+# sudo systemctl daemon-reload
+# sudo systemctl start alexa.service
+# sudo systemctl enable alexa.service
+#
+
+[Unit]
+Description=RPi alexa timer display
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -u /home/pi/rpi-alexa-timer/alexa-timer-display.py
+WorkingDirectory=/home/pi/rpi-alexa-timer
+#StandardOutput=inherit
+#StandardError=inherit
+# The following "file:" option requires systemd version 236 or newer 
+# 2019-04-08-raspbian-stretch-lite has version 232
+# To show version run: systemctl --version
+StandardOutput=append:/var/log/alexa.log
+StandardError=append:/var/log/alexa.log
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

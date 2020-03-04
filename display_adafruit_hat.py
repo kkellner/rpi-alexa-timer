@@ -58,7 +58,7 @@ class DisplayAdafruitHat():
         #self.font.LoadFont("ibm-vio-10x21-r-iso10646-1-21.bdf")
         #self.font.LoadFont("ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
-        self.matrix.brightness = 15 
+        self.matrix.brightness = 80 
         self.textColor = graphics.Color(255, 0, 0)
         logger.info("display adafruit hat init complete")
 
@@ -96,9 +96,9 @@ class DisplayAdafruitHat():
     def clear(self):
         self.show_text("")
 
-    def show_text(self, outText):
+    def show_text(self, outText, line = 1):
         self.offscreen_canvas.Clear()
-        len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, 15, self.textColor, outText)
+        len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, (15*line), self.textColor, outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
     def test(self):
@@ -106,7 +106,7 @@ class DisplayAdafruitHat():
         self.textColor = graphics.Color(255, 0, 0)
         #self.textColor = graphics.Color(255, 255, 255)
         #pos = offscreen_canvas.width
-        self.matrix.brightness = 15 
+        #self.matrix.brightness = 15 
 
         i = 1800.0
         while i >= 0:
