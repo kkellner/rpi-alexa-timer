@@ -53,10 +53,10 @@ class DisplayAdafruitHat():
         #self.font.LoadFont("../../../fonts/10x20.bdf")
         #self.font.LoadFont("ibm-vio-12x20-r-iso10646-1-20.bdf")
 
-        self.fontSmall.LoadFont("ibm-vio-6x10-r-iso10646-1-10.bdf")
-        self.font.LoadFont("ibm-vio-12x30-r-iso10646-1-30-modified.bdf")
-        #self.font.LoadFont("ibm-vio-10x21-r-iso10646-1-21.bdf")
-        #self.font.LoadFont("ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
+        self.fontSmall.LoadFont("fonts/ibm-vio-6x10-r-iso10646-1-10.bdf")
+        self.font.LoadFont("fonts/ibm-vio-12x30-r-iso10646-1-30-modified.bdf")
+        #self.font.LoadFont("fonts/ibm-vio-10x21-r-iso10646-1-21.bdf")
+        #self.font.LoadFont("fonts/ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
         self.matrix.brightness = 80 
         self.textColor = graphics.Color(255, 0, 0)
