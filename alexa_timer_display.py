@@ -43,7 +43,8 @@ class TimerGadget(AlexaGadget):
     counting down.
     """
 
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.timer_thread = None
         self.timer_token = None
         self.timer_end_time = None
@@ -56,7 +57,7 @@ class TimerGadget(AlexaGadget):
 
         self.display.show_text("Startup")
         self.display.show_text(ip, 2)
-        super().__init__()        
+        super().__init__("alexa_timer_display.ini")        
 
 
     def on_connected(self, device_addr):

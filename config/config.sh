@@ -73,11 +73,12 @@ sudo apt-get install -y python3-pip
 #sudo pip3 install RPI.GPIO
 #sudo pip3 install adafruit-blinka
 #sudo pip3 install adafruit-circuitpython-neopixel
-#sudo pip3 install pyyaml
-#sudo pip3 install schedule
 #sudo pip3 install melopero-vl53l1x
-#sudo pip3 install psutil
-#sudo pip3 install paho-mqtt
+sudo pip3 install pyyaml
+sudo pip3 install schedule
+sudo pip3 install psutil
+sudo pip3 install paho-mqtt
+sudo pip3 install netifaces
 
 # Add w1thermsensor command.
 # Command examples:

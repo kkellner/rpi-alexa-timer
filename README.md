@@ -36,19 +36,18 @@ sudo bash rgb-matrix.sh
 ```
 
 
-## Additional libs needed for this application
-
-```
-sudo pip3 install netifaces
-```
-
 ## Install THIS app
 
+Clone this repo and run a setup script.
 ```
 git clone https://github.com/kkellner/rpi-alexa-timer.git
+cd rpi-alexa-timer/config
+./config.sh --hostname new-hostname --password pi-user-password
 ```
 
 # Manually run
+
+TODO: Document config files yml/ini.
 
 ```
 sudo ./alexa-timer-display.py

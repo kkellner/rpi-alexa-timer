@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script type='text/javascript' src='https://code.jquery.com/jquery-1.9.1.js'></script>
+    <script type='text/javascript'>//<![CDATA[ 
+
+        // Used to convert "lightState" to color
+        var lightStateToColor = {
+            "UNKNOWN": 'blue',
+            "EMPTY": 'red',
+            "CRITICAL": 'red',
+            "LOW": 'yellow',
+            "OK": 'green',
+            "FULL": 'green',
+        };
+
+        var userLightStatesData = {};
+        var basaltData = {};
+
+
+        $(document).ready(function () {
+            getUserLightStates()
+            autoRefresh();
+        });
+
+        $(window).load(function () {
+            showLightState();
+        });
+
+        /*
+        window.addEventListener("click", function (event) {
+            updateData();
+        });
+        */
+
+        function getUserLightStates() {
+            var dataUrl = "/v1/userLightStates";
+            // Enable locally development of html
+            if (window.location.protocol == "file:") {
+                dataUrl = "http://rpitest2.local" + dataUrl;
+            }
+
+            $.ajax({
+                url: dataUrl,
+                async: true,
+                timeout: 15000
+            })
+                .done(function (data) {
+                    userLightStatesData = data;
+                    createLightStateButtons();
+                })
+                .fail(function (jqxhr, textStatus, errorThrown) {
+                    console.log("AJAX call HTTP status: " + jqxhr.status + " Error: [" + textStatus + "] : [" + errorThrown + "]");
+                    userLightStatesData = { };
+                });
+
+        }
+
+        function autoRefresh() {
+            getLatestData(false);
+            setTimeout(autoRefresh, 1000);
+        }
+
+        function getLatestData(async) {
+            var dataUrl = "/v1/data";
+            // Enable locally development of html
+            if (window.location.protocol == "file:") {
+                dataUrl = "http://rpitest2.local" + dataUrl;
+            }
+
+            $.ajax({
+                url: dataUrl,
+                async: async,
+                timeout: 15000
+            })
+                .done(function (data) {
+                    basaltData = data;
+                    updateData();
+                })
+                .fail(function (jqxhr, textStatus, errorThrown) {
+                    console.log("AJAX call HTTP status: " + jqxhr.status + " Error: [" + textStatus + "] : [" + errorThrown + "]");
+                    basaltData = { };
+                    updateData();
+                });
+
+        }
+
+        function updateData() {
+
+            for (var elementId in basaltData) {
+                var element = document.getElementById(elementId);
+                if (element != null) {
+                    element.innerText = basaltData[elementId];
+                }
+            }
+            var element = null
+
+            rpiInfo = basaltData['rpiInfo']
+            if (rpiInfo != null) {
+                updateField('wifiSignal', 'signal')
+                updateField('rxbitrate', 'rx bitrate')
+                updateField('txbitrate', 'tx bitrate')
+                updateField('freq', 'freq')
+                updateField('RX', 'RX')
+                updateField('TX', 'TX')
+                updateField('connectedtime', 'connected time')
+            }
+
+            showLightState();
+        }
+
+        function updateField(elementName, jsonFieldName) {
+            element = document.getElementById(elementName);
+            rpiInfo = basaltData['rpiInfo']
+            if (rpiInfo != null) {
+                element.innerText = basaltData['rpiInfo'][jsonFieldName]
+            }
+        }
+
+        function getLightColor() {
+            var state = basaltData['lightState'];
+            var color = lightStateToColor[state];
+            if (color == null) {
+                color = 'gray';
+            }
+            return color;
+        }
+
+        function showLightState() {
+            // TODO:
+        }
+
+        function showUserLightStates() {
+            elementName = "userLightStates"
+            element = document.getElementById(elementName);
+            element.innerText = JSON.stringify(userLightStatesData)
+        }
+
+        function createLightStateButtons() {
+
+            // sort by value
+            const mapSort1 = new Map([...Object.entries(userLightStatesData)].sort((a, b) => a[1] - b[1]));
+            //console.log(mapSort1);
+
+            for (const [key, value] of mapSort1) {
+                addLightStateButton(key)
+            }
+
+        }
+
+        function addLightStateButton(stateName) {
+            //Create an input type dynamically.   
+            var element = document.createElement("input");
+            //Assign different attributes to the element. 
+            element.type = "button";
+            element.id = stateName;
+            element.name = stateName;
+            element.value = stateName;
+            element.className = "lightStateButton"
+            element.onclick = function() { 
+                setLightState(this.id)
+            };
+
+            var buttonStateBar = document.getElementById("buttonStateBar");
+            buttonStateBar.appendChild(element);
+        }
+
+        function setLightState(stateName) {
+            //alert("Set light state:"+stateName);
+    
+            var dataUrl = "/v1/lightState";
+            // Enable locally development of html
+            if (window.location.protocol == "file:") {
+                dataUrl = "http://rpitest2.local" + dataUrl;
+            }
+
+            data = { "stateName": stateName };
+            jsonData = JSON.stringify(data);
+
+            $.ajax({
+                url: dataUrl,
+                type: "POST",
+                async: true,
+                timeout: 15000,
+                data: jsonData
+            })
+                .done(function (data) {
+                    // TODO: Update UI if status is not success
+                })
+                .fail(function (jqxhr, textStatus, errorThrown) {
+                    console.log("AJAX call HTTP status: " + jqxhr.status + " Error: [" + textStatus + "] : [" + errorThrown + "]");
+                });
+
+        }
+
+    //]]>
+    </script>
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            border: 0;
+            display: block;
+            font-size: 2vw;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            background-color: #ccc;
+        }
+
+        .lightStateButton {
+            background-color: #555555;
+            border: 3px solid rgba(0, 0, 0, 0.0);
+            color: white;
+            padding: 15px 32px;
+            margin: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            -webkit-transition-duration: 0.3s; /* Safari */
+            transition-duration: 0.3s;
+            
+        }
+
+        .lightStateButton:focus {
+            outline: none;
+            border-radius: 12px;
+            border: 3px solid rgb(156, 22, 22);
+        }
+
+
+        .lightStateButton:hover {
+            box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+            background-color: rgb(36, 36, 36); 
+        }
+
+        .disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .center {
+            position: relative;
+        }
+
+        #container {
+            padding-top: 30px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="container">
+        <span id="buttonStateBar">
+        </span>
+        <table>
+            <tr>
+                <th colspan="2">Temperatures</th>
+            </tr>
+            <tr>
+                <td>RPi:</td>
+                <td><span id="temperature"></span>&deg;</td>
+            </tr>
+            <tr>
+                <th colspan="2">Details</th>
+            </tr>
+                
+            <tr>
+                <td>Light State:</td>
+                <td><span id="lightState"></span></td>
+            </tr>
+            <tr>
+                <td>CPU:</td>
+                <td><span id="cpuPercent"></span>%</td>
+            </tr>
+            <tr>
+                <td>RPi Time:</td>
+                <td><span id="rpiTime"></span></td>
+            </tr>
+            <tr>
+                <th colspan="2">Wifi</th>
+            </tr>
+            <tr>
+                <td>Wifi signal:</td>
+                <td><span id="wifiSignal"></span></td>
+            </tr>
+            <tr>
+                <td>RX bitrate:</td>
+                <td><span id="rxbitrate"></span></td>
+            </tr>
+            <tr>
+                <td>TX bitrate:</td>
+                <td><span id="txbitrate"></span></td>
+            </tr>
+            <tr>
+                <td>Freq:</td>
+                <td><span id="freq"></span></td>
+            </tr>
+            <tr>
+                <td>RX:</td>
+                <td><span id="RX"></span></td>
+            </tr>
+            <tr>
+                <td>TX:</td>
+                <td><span id="TX"></span></td>
+            </tr>
+            <tr>
+                <td>Connected:</td>
+                <td><span id="connectedtime"></span></td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+
+</html>
