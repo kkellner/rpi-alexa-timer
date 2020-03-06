@@ -58,7 +58,7 @@ class DisplayAdafruitHat():
         #self.font.LoadFont("fonts/ibm-vio-10x21-r-iso10646-1-21.bdf")
         #self.font.LoadFont("fonts/ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
-        self.matrix.brightness = 80 
+        self.matrix.brightness = 100 
         self.textColor = graphics.Color(255, 0, 0)
         logger.info("display adafruit hat init complete")
 
@@ -67,7 +67,7 @@ class DisplayAdafruitHat():
 
         halfSecond = (time_remaining % 1) >= 0.5
 
-        logger.info("%d seconds left.  halfSecond: %d", time_remaining, halfSecond)
+        #logger.info("%d seconds left.  halfSecond: %d", time_remaining, halfSecond)
 
         # Format the timer digits for display
         minutes = time.strftime("%M", time.gmtime(time_remaining))

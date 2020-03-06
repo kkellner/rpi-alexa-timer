@@ -10,7 +10,7 @@ Description=RPi alexa timer display
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 -u /home/pi/rpi-alexa-timer/alexa-timer-display.py
+ExecStart=/usr/bin/python3 -u /home/pi/rpi-alexa-timer/alexa.py
 WorkingDirectory=/home/pi/rpi-alexa-timer
 #StandardOutput=inherit
 #StandardError=inherit

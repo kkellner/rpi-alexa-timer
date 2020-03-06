@@ -27,10 +27,6 @@ from agt import AlexaGadget
 #from display_max7219 import DisplayMax7219 as Display
 from display_adafruit_hat import DisplayAdafruitHat as Display
 
-
-FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.NOTSET, format=FORMAT)
-#logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 # Alexa Gadget code.  
@@ -129,22 +125,24 @@ class TimerGadget(AlexaGadget):
         """
         # check every 500ms
         start_time = time.time()
-        logger.info("current time: %f", start_time)
-
         time_remaining = self.timer_end_time - start_time
+
+        logger.info("Alexa timer token %s.  %d seconds left.", 
+                self.timer_token, time_remaining)
+
         while self.timer_token and time_remaining > 0:
             #time_total = self.timer_end_time - start_time
             currentTime = time.time()
             time_remaining = max(0, self.timer_end_time - currentTime)
             halfSecond = (time.time() % 1) >= 0.5
-            logger.info("Timer token %s.  %d seconds left.  halfSecond: %d", 
-                self.timer_token, time_remaining, halfSecond)
+            #logger.info("Timer token %s.  %d seconds left.  halfSecond: %d", 
+            #    self.timer_token, time_remaining, halfSecond)
 
             # Format the timer digits for display
             timer = time.strftime("%H:%M:%S", time.gmtime(time_remaining))
 
             # Display timer here
-            logger.info("Display timer value: %s", timer)
+            #logger.info("Display timer value: %s", timer)
             self.display.display_time_remaining(time_remaining)
 
             # We grab the time again to caculate sleep
@@ -207,7 +205,7 @@ if __name__ == '__main__':
 
     if os.geteuid() != 0:
         exit("You need to have root privileges to run this program.\nPlease try again, this time using 'sudo'. Exiting.")
-    gadget = TimerGadget()
+    gadget = TimerGadget(None)
     logger.info("gadget about to call main")
     gadget.main()
         

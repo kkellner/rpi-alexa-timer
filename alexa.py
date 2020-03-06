@@ -74,7 +74,7 @@ class Alexa:
         #self.server.run()
 
         thread1 = threading.Thread(target=(lambda: self.server.run() ))
-        thread1.setDaemon(True) 
+        thread1.setDaemon(True)
         thread1.start()
 
         logger.info("About to call gadget main")
