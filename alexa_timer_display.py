@@ -42,8 +42,11 @@ class TimerGadget(AlexaGadget):
     def __init__(self, app):
         self.app = app
         self.timer_thread = None
-        self.timer_token = None
-        self.timer_end_time = None
+
+        # Dictionary of timers where key is token and value is end time
+        self.timers = {}
+        self.sortedTimers = None
+
         self.event = threading.Event()
         logger.info("init display")
         self.display = Display()
@@ -82,68 +85,88 @@ class TimerGadget(AlexaGadget):
 
         # check if this is an update to an alrady running timer (e.g. users asks alexa to add 30s)
         # if it is, just adjust the end time
-        if self.timer_token == directive.payload.token:
-            logger.info("Received SetAlert directive for token %s to update to currently running timer. Adjusting", directive.payload.token)
-            self.timer_end_time = t
-            return
 
-        # check if another timer is already running. if it is, just ignore this one
-        if self.timer_thread is not None and self.timer_thread.isAlive():
-            logger.info("Received SetAlert directive for token %s but another timer is already running. Ignoring", directive.payload.token)
-            return
+        self.timers[directive.payload.token] = t
 
-        # start a thread to rotate the servo
-        logger.info("Received SetAlert directive for token %s. Starting a timer.  %d seconds left.", 
-            directive.payload.token, int(t - time.time()))
+        # if  directive.payload.token in self.timers:
+        #     logger.info("Received SetAlert directive for token %s to update to currently running timer. Adjusting", directive.payload.token)
+        #     self.timers[directive.payload.token] = t
+            
 
-        self.timer_end_time = t
-        self.timer_token = directive.payload.token
+        # if self.timer_token_primary == directive.payload.token:
+        #     logger.info("Received SetAlert directive for token %s to update to currently running timer. Adjusting", directive.payload.token)
+        #     self.timer_end_time_primary = t
+        #     return
+
+        # # check if another timer is already running. if it is, just ignore this one
+        # if self.timer_thread is not None and self.timer_thread.isAlive():
+        #     logger.info("Received SetAlert directive for token %s but another timer is already running. Ignoring", directive.payload.token)
+        #     return
+
+        # logger.info("Received SetAlert directive for token %s. Starting a timer.  %d seconds left.", 
+        #     directive.payload.token, int(t - time.time()))
+
+        # self.timer_end_time_primary = t
+        # self.timer_token_primary = directive.payload.token
+
+        self.sort_timers()
+
+        # timersLen = len(sortedTimers)
+        # if timersLen > 0:
+        #     self.timer_end_time_primary = t
+        #     self.timer_token_primary = directive.payload.token
 
         # run timer in it's own thread to prevent blocking future directives during count down
-        self.timer_thread = threading.Thread(target=self._run_timer)
-        self.timer_thread.setDaemon(True) 
-        self.timer_thread.start()
+        if self.timer_thread is None:
+            self.timer_thread = threading.Thread(target=self._run_timer)
+            self.timer_thread.setDaemon(True) 
+            self.timer_thread.start()
 
     def on_alerts_deletealert(self, directive):
         """
         Handles Alerts.DeleteAlert directive sent from Echo Device
         """
-        # check if this is for the currently running timer. if not, just ignore
-        if self.timer_token != directive.payload.token:
-            logger.info("Received DeleteAlert directive but not for the currently active timer. Ignoring")
-            return
+        # # check if this is for the currently running timer. if not, just ignore
+        # if self.timer_token_primary != directive.payload.token:
+        #     logger.info("Received DeleteAlert directive but not for the currently active timer. Ignoring")
+        #     return
 
-        # delete the timer, and stop the currently running timer thread
-        logger.info("Received DeleteAlert directive. Cancelling the timer")
-        self.timer_token = None
-        self.display.clear()
+        # # delete the timer, and stop the currently running timer thread
+        # logger.info("Received DeleteAlert directive. Cancelling the timer")
+        # self.timer_token_primary = None
 
+        self.timers.pop(directive.payload.token)
+        self.sort_timers()
+    
+
+    def sort_timers(self):
+        self.sortedTimers = sorted(self.timers.items(), key = lambda kv:(kv[1], kv[0]))
 
     def _run_timer(self):
         """
         Runs a timer
         """
-        # check every 500ms
-        start_time = time.time()
-        time_remaining = self.timer_end_time - start_time
+        time_remaining = 1
+        while bool(self.timers) and time_remaining > 0:
 
-        logger.info("Alexa timer token %s.  %d seconds left.", 
-                self.timer_token, time_remaining)
-
-        while self.timer_token and time_remaining > 0:
-            #time_total = self.timer_end_time - start_time
             currentTime = time.time()
-            time_remaining = max(0, self.timer_end_time - currentTime)
-            halfSecond = (time.time() % 1) >= 0.5
-            #logger.info("Timer token %s.  %d seconds left.  halfSecond: %d", 
-            #    self.timer_token, time_remaining, halfSecond)
+
+            # Get secondary timer info (if any)
+            time_remaining_secondary = None
+            if len(self.sortedTimers) > 1:
+                timer_end_time = self.sortedTimers[1][1]
+                time_remaining_secondary = max(0, timer_end_time - currentTime)
+            
+            timer_end_time = self.sortedTimers[0][1]
+            time_remaining = max(0, timer_end_time - currentTime)
+            self.display.display_time_remaining(time_remaining, time_remaining_secondary)
+
+            #logger.info("Timer token %s.  %d seconds left.", 
+            #    self.sortedTimers[0][0], time_remaining)
 
             # Format the timer digits for display
-            timer = time.strftime("%H:%M:%S", time.gmtime(time_remaining))
-
-            # Display timer here
+            #timer = time.strftime("%H:%M:%S", time.gmtime(time_remaining))
             #logger.info("Display timer value: %s", timer)
-            self.display.display_time_remaining(time_remaining)
 
             # We grab the time again to caculate sleep
             subseconds = time.time() % 1
@@ -153,7 +176,9 @@ class TimerGadget(AlexaGadget):
                 sleepTime = 0.5 - subseconds
             #logger.info("sleepTime: %f", sleepTime)
             self.event.wait(sleepTime)
-
+        
+        self.timer_thread = None
+        self.display.clear()
 
     def test(self):
         """
@@ -164,8 +189,8 @@ class TimerGadget(AlexaGadget):
 
         scheduledTime = '2020-02-11T02:00:00-07:00'
         t = dateutil.parser.parse(scheduledTime).timestamp()
-        self.timer_end_time = t
-        self.timer_token = '2551392553'
+        self.timers['2551392553'] = t
+        self.sort_timers()
         self.timer_thread = threading.Thread(target=self._run_timer)
         self.timer_thread.setDaemon(True) 
         self.timer_thread.start()
@@ -184,7 +209,7 @@ class TimerGadget(AlexaGadget):
     def signal_handler(self, signum, frame):
             logger.info('Shutdown...')
 
-            self.timer_token = None
+            self.timer_token_primary = None
             self.event.set()
 
             # Do cleanup here

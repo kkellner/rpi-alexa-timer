@@ -53,17 +53,44 @@ class DisplayAdafruitHat():
         #self.font.LoadFont("../../../fonts/10x20.bdf")
         #self.font.LoadFont("ibm-vio-12x20-r-iso10646-1-20.bdf")
 
-        self.fontSmall.LoadFont("fonts/ibm-vio-6x10-r-iso10646-1-10.bdf")
+        self.fontSmall.LoadFont("fonts/ibm-vio-6x10-r-iso10646-1-10-modified.bdf")
         self.font.LoadFont("fonts/ibm-vio-12x30-r-iso10646-1-30-modified.bdf")
         #self.font.LoadFont("fonts/ibm-vio-10x21-r-iso10646-1-21.bdf")
         #self.font.LoadFont("fonts/ibm-vio-12x22-r-iso10646-1-22-modified.bdf")
         #self.font.LoadFont("../../../fonts/helvR12.bdf")
         self.matrix.brightness = 100 
-        self.textColor = graphics.Color(255, 0, 0)
+        #self.textColor = graphics.Color(255, 0, 0)
         logger.info("display adafruit hat init complete")
 
 
-    def display_time_remaining(self, time_remaining):
+    def display_time_remaining(self, primary_time_remaining, secondary_time_remaining = None):
+
+       
+        self.offscreen_canvas.Clear()
+ 
+        # Set the default Y offset for primary timer to middle of display
+        outTextPrimaryYOffset = 25
+
+        # Display Secondary timer (if one is set)
+        if secondary_time_remaining is not None:
+            outTextSecondary = self.format_time_remaining(secondary_time_remaining, True)
+            #outTextSecondary = " " + outTextSecondary
+            textColor = graphics.Color(128, 0, 0)
+            graphics.DrawText(self.offscreen_canvas, self.fontSmall, 4, 31, textColor, outTextSecondary)
+            # We change the Y offset of primary timer to top of display to leave room for secondary timer
+            outTextPrimaryYOffset = 20
+
+        # Display Primary Timer
+        outTextPrimary = self.format_time_remaining(primary_time_remaining)
+        textColor = graphics.Color(255, 0, 0)
+        graphics.DrawText(self.offscreen_canvas, self.font, 2, outTextPrimaryYOffset, textColor, outTextPrimary)
+        
+        self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+
+    def format_time_remaining(self, time_remaining, no_flash_colon = False):
+
+        if time_remaining is None:
+            return ""
 
         halfSecond = (time_remaining % 1) >= 0.5
 
@@ -73,7 +100,7 @@ class DisplayAdafruitHat():
         minutes = time.strftime("%M", time.gmtime(time_remaining))
         seconds = time.strftime("%S", time.gmtime(time_remaining))
 
-        if halfSecond or (minutes == "00" and seconds == "00"):
+        if halfSecond or (minutes == "00" and seconds == "00") or no_flash_colon:
             sperator = ":" 
         else:
             sperator = "~"
@@ -85,25 +112,20 @@ class DisplayAdafruitHat():
             minutes = minutes.replace('0', ' ', 1)
 
         outText = minutes + sperator + seconds
-
-        self.offscreen_canvas.Clear()
-        #len = graphics.DrawText(self.offscreen_canvas, font, pos, 10, textColor, my_text)
-        #len = graphics.DrawText(self.offscreen_canvas, self.font, 2, 15, self.textColor, outText)
-        len = graphics.DrawText(self.offscreen_canvas, self.font, 2, 25, self.textColor, outText)
-        #print("time:"+outText)
-        self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+        return outText
 
     def clear(self):
         self.show_text("")
 
     def show_text(self, outText, line = 1):
         self.offscreen_canvas.Clear()
-        len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, (15*line), self.textColor, outText)
+        textColor = graphics.Color(255, 0, 0)
+        len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, (15*line), textColor, outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
     def test(self):
 
-        self.textColor = graphics.Color(255, 0, 0)
+        #self.textColor = graphics.Color(255, 0, 0)
         #self.textColor = graphics.Color(255, 255, 255)
         #pos = offscreen_canvas.width
         #self.matrix.brightness = 15 
