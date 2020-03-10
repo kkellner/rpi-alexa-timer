@@ -69,7 +69,7 @@ class DisplayAdafruitHat():
         self.offscreen_canvas.Clear()
  
         # Set the default Y offset for primary timer to middle of display
-        outTextPrimaryYOffset = 25
+        outTextPrimaryYOffset = 27
 
         # Display Secondary timer (if one is set)
         if secondary_time_remaining is not None:
@@ -78,7 +78,7 @@ class DisplayAdafruitHat():
             textColor = graphics.Color(128, 0, 0)
             graphics.DrawText(self.offscreen_canvas, self.fontSmall, 4, 31, textColor, outTextSecondary)
             # We change the Y offset of primary timer to top of display to leave room for secondary timer
-            outTextPrimaryYOffset = 20
+            outTextPrimaryYOffset = 22
 
         # Display Primary Timer
         outTextPrimary = self.format_time_remaining(primary_time_remaining)
@@ -97,21 +97,42 @@ class DisplayAdafruitHat():
         #logger.info("%d seconds left.  halfSecond: %d", time_remaining, halfSecond)
 
         # Format the timer digits for display
-        minutes = time.strftime("%M", time.gmtime(time_remaining))
-        seconds = time.strftime("%S", time.gmtime(time_remaining))
+        gmtime = time.gmtime(time_remaining)
 
-        if halfSecond or (minutes == "00" and seconds == "00") or no_flash_colon:
+        hours = gmtime.tm_hour
+        minutes = gmtime.tm_min
+        seconds = gmtime.tm_sec
+
+        # Format Hours
+        hoursStr = str(hours)
+        if (hours < 10):
+            hoursStr = " " + hoursStr
+
+        # Format Minutes
+        minutesStr = str(minutes)
+        if (hours == 0 and minutes == 0):
+            minutesStr = "  "
+        else:
+            minutesStr = str(minutes)
+            if (hours > 0 and minutes < 10):
+                minutesStr = minutesStr.zfill(2)
+            elif (minutes < 10):
+                minutesStr = " " + minutesStr
+
+        # Format Seconds
+        secondsStr = str(seconds).zfill(2)
+
+        # Format time seperator
+        if halfSecond or (time_remaining == 0) or no_flash_colon:
             sperator = ":" 
         else:
             sperator = "~"
 
-        if minutes == "00":
-            minutes = "  "
+        if hours > 0:
+            outText = hoursStr + "\uFEFD" + minutesStr + "\uFEFE"
+        else:
+            outText = minutesStr + sperator + secondsStr
 
-        if minutes.startswith('0'):
-            minutes = minutes.replace('0', ' ', 1)
-
-        outText = minutes + sperator + seconds
         return outText
 
     def clear(self):

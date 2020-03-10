@@ -147,7 +147,7 @@ class TimerGadget(AlexaGadget):
         Runs a timer
         """
         time_remaining = 1
-        while bool(self.timers) and time_remaining > 0:
+        while bool(self.timers):
 
             currentTime = time.time()
 
