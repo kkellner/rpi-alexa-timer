@@ -144,6 +144,22 @@ class DisplayAdafruitHat():
         len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, 2, (15*line), textColor, outText)
         self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
 
+    def scroll_text(self, outText, line = 1, repeat = 1):
+        textColor = graphics.Color(255, 0, 0)
+
+        for loop_count in range(repeat):
+            pos = self.offscreen_canvas.width
+            while True:
+                self.offscreen_canvas.Clear()
+                len = graphics.DrawText(self.offscreen_canvas, self.fontSmall, pos, (15*line), textColor, outText)
+                pos -= 1
+                if (pos + len < 0):
+                    #pos = offscreen_canvas.width
+                    break
+                time.sleep(0.02)
+                self.offscreen_canvas = self.matrix.SwapOnVSync(self.offscreen_canvas)
+
+
     def test(self):
 
         #self.textColor = graphics.Color(255, 0, 0)
@@ -165,6 +181,7 @@ if __name__ == "__main__":
 
     display = DisplayAdafruitHat()
     #display.show_text("00:00")
-    display.test()
+    #display.test()
+    display.scroll_text("Hello", 1, 2)
     #display.display_time_remaining(60)
     #time.sleep(60)

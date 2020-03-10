@@ -54,10 +54,11 @@ class TimerGadget(AlexaGadget):
         #netifaces.ifaddresses('wlan0')
         ip = netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
 
-        self.display.show_text("Startup")
-        self.display.show_text(ip, 2)
+        #self.display.show_text("Startup")
+        #self.display.show_text(ip, 2)
+        self.display.scroll_text("Startup: " + ip, 2, 2)
         super().__init__("alexa_timer_display.ini")        
-
+        self.display.show_text("Initialize", 2)
 
     def on_connected(self, device_addr):
         logger.info("on_connected called")
@@ -66,6 +67,8 @@ class TimerGadget(AlexaGadget):
 
     def on_disconnected(self, device_addr):
         logger.info("on_disconnect called")
+        self.timers = {}
+        time.sleep(1)
         self.display.show_text("Disconnected")
 
     def on_alerts_setalert(self, directive):
