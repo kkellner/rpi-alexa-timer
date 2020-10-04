@@ -26,7 +26,7 @@ class Alexa:
     def __init__(self):
         self.pubsub = None
         self.server = None
-        self.light = None
+        self.gadget = None
         self.rpi_info = None
 
         # Docs: https://docs.python.org/3/library/logging.html

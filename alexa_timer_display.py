@@ -119,11 +119,7 @@ class TimerGadget(AlexaGadget):
         #     self.timer_end_time_primary = t
         #     self.timer_token_primary = directive.payload.token
 
-        # run timer in it's own thread to prevent blocking future directives during count down
-        if self.timer_thread is None:
-            self.timer_thread = threading.Thread(target=self._run_timer)
-            self.timer_thread.setDaemon(True) 
-            self.timer_thread.start()
+        self.create_timer_thread()
 
     def on_alerts_deletealert(self, directive):
         """
@@ -141,31 +137,67 @@ class TimerGadget(AlexaGadget):
         self.timers.pop(directive.payload.token)
         self.sort_timers()
     
+    def create_timer_thread(self):
+        """
+        Run timer in it's own thread to prevent blocking future directives during count down
+        """
+        if self.timer_thread is None:
+            self.timer_thread = threading.Thread(target=self._run_timer)
+            self.timer_thread.setDaemon(True) 
+            self.timer_thread.start()
+
+    def update_all_timers(self, updatedTimersArray):
+        """
+        Update the timers with an array of Timers.  Array example:
+            {
+                "id": "AB72C64C86AW2-B0F007155344044W-abed9ed1-8043-3c90-b93b-e8e96cfddbbf",
+                "deviceName": "tv_room",
+                "expireTime": "2020-10-03T12:46:12-0600"
+            }, ...
+        """
+        timersMap = {}
+        for timer in updatedTimersArray: 
+            timerId = timer['id']
+            expireTime = dateutil.parser.parse(timer['expireTime'])   
+            timersMap[timerId] = expireTime.timestamp()
+            logger.info("timer id: %s time: %s", timerId, expireTime)
+
+        self.timers = timersMap
+        self.sort_timers()
+        self.create_timer_thread()
 
     def sort_timers(self):
         self.sortedTimers = sorted(self.timers.items(), key = lambda kv:(kv[1], kv[0]))
+        # Remove timers that are more then 15 second is the past
+        #currentTimePlus = time.time() - 15
+        #self.sortedTimers = [x for x in sortedTimersTemp if x[1] > currentTimePlus]
+
 
     def _run_timer(self):
         """
         Runs a timer
         """
         time_remaining = 1
-        while bool(self.timers):
+        while bool(self.sortedTimers):
 
             currentTime = time.time()
+            currentTimePlus = currentTime - 15
+            sortedTimersFiltered = [x for x in self.sortedTimers if x[1] > currentTimePlus]
+            if bool(not sortedTimersFiltered):
+                break
 
             # Get secondary timer info (if any)
             time_remaining_secondary = None
-            if len(self.sortedTimers) > 1:
-                timer_end_time = self.sortedTimers[1][1]
+            if len(sortedTimersFiltered) > 1:
+                timer_end_time = sortedTimersFiltered[1][1]
                 time_remaining_secondary = max(0, timer_end_time - currentTime)
             
-            timer_end_time = self.sortedTimers[0][1]
+            timer_end_time = sortedTimersFiltered[0][1]
             time_remaining = max(0, timer_end_time - currentTime)
             self.display.display_time_remaining(time_remaining, time_remaining_secondary)
 
             #logger.info("Timer token %s.  %d seconds left.", 
-            #    self.sortedTimers[0][0], time_remaining)
+            #    sortedTimersFiltered[0][0], time_remaining)
 
             # Format the timer digits for display
             #timer = time.strftime("%H:%M:%S", time.gmtime(time_remaining))

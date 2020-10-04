@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 class Pubsub:
 
  
-    def __init__(self, basalt):
-        self.basalt = basalt
+    def __init__(self, alexa):
+        self.alexa = alexa
 
         ymlfile = open("config.yml", 'r')
         cfg = yaml.safe_load(ymlfile)
@@ -54,8 +54,11 @@ class Pubsub:
         self.queueNodeStatus = self.queueNamespace + "/node/" + self.nodeName + "/status"
 
         # Device name example: yukon/device/basalt/driveway/basalt1/light/status
-        self.queueDeviceStatus = self.queueNamespace + "/device/" + self.typeName + "/" + self.locationName + "/" + self.nodeName + "/" + self.deviceName + "/status"
+        self.queueDeviceStatus =       self.queueNamespace + "/device/" + self.typeName + "/" + self.locationName + "/" + self.nodeName + "/" + self.deviceName + "/status"
+        self.queueDeviceUpdateTimers = self.queueNamespace + "/device/" + self.typeName + "/" + self.locationName + "/" + self.nodeName + "/" + self.deviceName + "/timers"
+
         self.queueDeviceAllStatus = self.queueNamespace + "/device/" + self.typeName + "/" + self.locationName + "/ALL/" + self.deviceName + "/status"
+
 
 
         logger.info("Node name: %s Node MQTT: %s Device MQTT: %s", self.nodeName, self.queueNodeStatus, self.queueDeviceStatus )
@@ -71,7 +74,7 @@ class Pubsub:
         deathPayload = "DISCONNECTED"
         self.client.will_set(self.queueNodeStatus, deathPayload, 0, True)
 
-        self.client.message_callback_add(self.queueDeviceAllStatus, self.on_message_light_status)
+        self.client.message_callback_add(self.queueDeviceUpdateTimers, self.on_message_update_timers)
         self.client.on_message = self.on_message
 
         self.client.username_pw_set(self.mqttBrokerUsername, self.mqttBrokerPassword)
@@ -114,6 +117,7 @@ class Pubsub:
         logger.info("Connected with result code "+str(rc))
         self.publishBirth()
         self.client.subscribe(self.queueDeviceAllStatus, qos=2)
+        self.client.subscribe(self.queueDeviceUpdateTimers, qos=2)
 
     def on_disconnect(self, client, userdata, rc):
         logger.warn("Disconnected with result code "+str(rc))
@@ -130,7 +134,7 @@ class Pubsub:
     ######################################################################
     # Subscribe: List for the ALL (sync) queue to change light state
     ######################################################################
-    def on_message_light_status(self, client, userdata, msg):
+    def on_message_update_timers(self, client, userdata, msg):
         try:
             topic=msg.topic
             logger.info("Got message from %s timestamp: %s", topic, msg.timestamp)
@@ -138,19 +142,18 @@ class Pubsub:
             #logger.info("data Received type %s",type(m_decode))
             logger.info("data Received: %s",m_decode)
             m_in=json.loads(m_decode) #decode json data
-            lightStateName = m_in["lightState"]
-            logger.info("payload light state = %s", lightStateName)
+            timers = m_in["timers"]
+            logger.info("payload timers: %s", timers)
 
-            if not lightStateName in LightState.__members__:
-                logger.error("Unknown light state name: [%s]", lightStateName)
-                return
+            # for timer in timers: 
+            #     logger.info("timer id: %s", timer['id'])
 
-            lightState = LightState[lightStateName]
-            #light = self.basalt.light
-            #light.setLightState(lightState)
+            self.alexa.gadget.update_all_timers(timers)
+
         except: # catch *all* exceptions
             e = sys.exc_info()
-            logger.error("Exception in on_message_light_status: %s", e)
+            logger.error("Exception in on_message_update_timers: %s", e)
+
 
     def shutdown(self):
         logger.info("Shutdown -- disconnect from MQTT broker")
