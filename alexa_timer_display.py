@@ -28,6 +28,7 @@ from agt import AlexaGadget
 from display_adafruit_hat import DisplayAdafruitHat as Display
 
 logger = logging.getLogger(__name__)
+ignoreBluetoothIfMqttUpdateInLastSeconds = 10 * 60
 
 # Alexa Gadget code.  
 # Parent class: https://github.com/alexa/Alexa-Gadgets-Raspberry-Pi-Samples/blob/master/src/agt/alexa_gadget.py
@@ -46,6 +47,8 @@ class TimerGadget(AlexaGadget):
         # Dictionary of timers where key is token and value is end time
         self.timers = {}
         self.sortedTimers = None
+        self.lastAllTimersUpdate = 0
+
 
         self.event = threading.Event()
         logger.info("init display")
@@ -86,39 +89,15 @@ class TimerGadget(AlexaGadget):
             logger.info("Received SetAlert directive for token %s but scheduledTime has already passed. Ignoring", directive.payload.token)
             return
 
+        # Check if we had an MQTT AllTimersUptime recently, if so, ignore the bluetooth update
+        if (self.lastAllTimersUpdate + ignoreBluetoothIfMqttUpdateInLastSeconds) > time.time():
+            return
+
         # check if this is an update to an alrady running timer (e.g. users asks alexa to add 30s)
         # if it is, just adjust the end time
 
         self.timers[directive.payload.token] = t
-
-        # if  directive.payload.token in self.timers:
-        #     logger.info("Received SetAlert directive for token %s to update to currently running timer. Adjusting", directive.payload.token)
-        #     self.timers[directive.payload.token] = t
-            
-
-        # if self.timer_token_primary == directive.payload.token:
-        #     logger.info("Received SetAlert directive for token %s to update to currently running timer. Adjusting", directive.payload.token)
-        #     self.timer_end_time_primary = t
-        #     return
-
-        # # check if another timer is already running. if it is, just ignore this one
-        # if self.timer_thread is not None and self.timer_thread.isAlive():
-        #     logger.info("Received SetAlert directive for token %s but another timer is already running. Ignoring", directive.payload.token)
-        #     return
-
-        # logger.info("Received SetAlert directive for token %s. Starting a timer.  %d seconds left.", 
-        #     directive.payload.token, int(t - time.time()))
-
-        # self.timer_end_time_primary = t
-        # self.timer_token_primary = directive.payload.token
-
         self.sort_timers()
-
-        # timersLen = len(sortedTimers)
-        # if timersLen > 0:
-        #     self.timer_end_time_primary = t
-        #     self.timer_token_primary = directive.payload.token
-
         self.create_timer_thread()
 
     def on_alerts_deletealert(self, directive):
@@ -134,7 +113,7 @@ class TimerGadget(AlexaGadget):
         # logger.info("Received DeleteAlert directive. Cancelling the timer")
         # self.timer_token_primary = None
 
-        self.timers.pop(directive.payload.token)
+        self.timers.pop(directive.payload.token, None)
         self.sort_timers()
     
     def create_timer_thread(self):
@@ -155,6 +134,7 @@ class TimerGadget(AlexaGadget):
                 "expireTime": "2020-10-03T12:46:12-0600"
             }, ...
         """
+        self.lastAllTimersUpdate =  time.time()
         timersMap = {}
         for timer in updatedTimersArray: 
             timerId = timer['id']
