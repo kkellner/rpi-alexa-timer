@@ -12,10 +12,9 @@ import sys
 import os
 
 from pubsub import Pubsub
-#from light import Light
 from http_request import HttpServer
 from rpi_info import RpiInfo
-from alexa_timer_display import TimerGadget
+from manage_timers import ManageTimers
 
 logger = logging.getLogger('alexa')
 
@@ -26,8 +25,8 @@ class Alexa:
     def __init__(self):
         self.pubsub = None
         self.server = None
-        self.gadget = None
         self.rpi_info = None
+        self.manage_timers = None
 
         # Docs: https://docs.python.org/3/library/logging.html
         # Docs on config: https://docs.python.org/3/library/logging.config.html
@@ -63,11 +62,10 @@ class Alexa:
     def startup(self):
         logger.info('Startup...')
 
-        # self.light = Light(self)
-        # self.light.showStartup()
+
+        self.manage_timers = ManageTimers(self)
         self.pubsub = Pubsub(self)
         self.rpi_info = RpiInfo(self)
-        self.gadget = TimerGadget(self)
 
         self.server = HttpServer(self)
         # the following is a blocking call
@@ -77,9 +75,10 @@ class Alexa:
         thread1.setDaemon(True)
         thread1.start()
 
-        logger.info("About to call gadget main")
-        # The following is a blocking call
-        self.gadget.main()
+        # NOTE: This is a blocking call
+        self.manage_timers.startup()
+
+
 
 
 def main():

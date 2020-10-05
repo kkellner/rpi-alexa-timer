@@ -148,7 +148,7 @@ class Pubsub:
             # for timer in timers: 
             #     logger.info("timer id: %s", timer['id'])
 
-            self.alexa.gadget.update_all_timers(timers)
+            self.alexa.manage_timers.timers_from_mqtt.update_all_timers(timers)
 
         except: # catch *all* exceptions
             e = sys.exc_info()
