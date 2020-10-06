@@ -44,6 +44,10 @@ class ManageTimers:
 
         self.event = threading.Event()
 
+        self.timers_from_mqtt = TimersFromMqtt(self)
+        self.timers_from_bluetooth = TimersFromBluetooth(self)
+
+
         logger.info("init display")
         self.display = Display()
 
@@ -56,8 +60,6 @@ class ManageTimers:
 
         
     def startup(self):
-        self.timers_from_mqtt = TimersFromMqtt(self)
-        self.timers_from_bluetooth = TimersFromBluetooth(self)
 
         #self.display.show_text("Initialize", 2)
         self.display.clear()

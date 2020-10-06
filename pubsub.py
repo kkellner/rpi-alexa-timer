@@ -109,15 +109,15 @@ class Pubsub:
     # Publish the NODE offline
     ######################################################################
     def publishNodeOffline(self):
-        logger.info("Publishing Node Birth")
+        logger.info("Publishing Node Death")
         payload = "offline"
         self.client.publish(self.queueNodeStatus, payload, 0, True)
         
     def on_connect(self, client, userdata, flags, rc):
         logger.info("Connected with result code "+str(rc))
-        self.publishBirth()
         self.client.subscribe(self.queueDeviceAllStatus, qos=2)
         self.client.subscribe(self.queueDeviceUpdateTimers, qos=2)
+        self.publishBirth()
 
     def on_disconnect(self, client, userdata, rc):
         logger.warn("Disconnected with result code "+str(rc))
